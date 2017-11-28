@@ -1,4 +1,8 @@
-﻿(function () {
+﻿// ckeditor-pastebase64 1.0.1r (patched)
+// https://github.com/ruvor/ckeditor-pastebase64
+// orig: https://github.com/javaha/ckeditor-pastebase64
+
+(function () {
     'use strict';
 
     CKEDITOR.plugins.add('pastebase64', {
@@ -16,8 +20,6 @@
             var editableElement = editor.editable ? editor.editable() : editor.document;
             editableElement.on("paste", onPaste, null, {editor: editor});
         });
-
-
     }
 
     function onPaste(event) {
@@ -37,13 +39,13 @@
             }
 
             if (type.match(imageType) || clipboardData.items[i].type.match(imageType)) {
-                readImageAsBase64(clipboardData.items[i], editor);
+                readImageAsBase64(clipboardData.items[i], editor, clipboardData.items.length > 1);
                 return found = true;
             }
         });
     }
 
-    function readImageAsBase64(item, editor) {
+    function readImageAsBase64(item, editor, useWorkAround) {
         if (!item || typeof item.getAsFile !== 'function') {
             return;
         }
@@ -61,6 +63,15 @@
             // We use a timeout callback to prevent a bug where insertElement inserts at first caret
             // position
             setTimeout(function () {
+                if (useWorkAround) {
+                    var img = editor.getSelection().getRanges()[0].getBoundaryNodes().endNode;
+                    if (img.$.tagName !== "IMG") {
+                        img = img.getPrevious();
+                    }
+                    if (img && img.$.tagName === "IMG") {
+                        img.remove()
+                    }
+                }
                 editor.insertElement(element);
             }, 10);
         };
